@@ -1,5 +1,5 @@
 diff --git a/src/spectrogram.c b/src/spectrogram.c
-index b3731ca..33d8159 100644
+index b3731ca..e727cd8 100644
 --- a/src/spectrogram.c
 +++ b/src/spectrogram.c
 @@ -54,13 +54,14 @@ static lsx_enum_item const window_options[] = {
@@ -115,7 +115,7 @@ index b3731ca..33d8159 100644
      case 't': p->title            = optstate.arg; break;
      case 'c': p->comment          = optstate.arg; break;
      case 'o': p->out_name         = optstate.arg; break;
-@@ -140,6 +211,16 @@ static int getopts(sox_effect_t * effp, int argc, char **argv)
+@@ -140,6 +211,20 @@ static int getopts(sox_effect_t * effp, int argc, char **argv)
      case 'd': next = lsx_parsesamples(1e5, optstate.arg, &dummy, 't');
        if (next && !*next) {p->duration_str = lsx_strdup(optstate.arg); break;}
        return lsx_usage(effp);
@@ -128,11 +128,15 @@ index b3731ca..33d8159 100644
 +        lsx_fail("Frequency range `%s' is invalid. Frequencies must be positive.", optstate.arg);
 +        exit(1);
 +      }
++      if (p->low_freq >= p->high_freq) {
++        lsx_fail("Frequency range `%s' is invalid. Lower frequency must be less than higher frequency.", optstate.arg);
++        exit(1);
++      }
 +      break;
      default: lsx_fail("invalid option `-%c'", optstate.opt); return lsx_usage(effp);
    }
    if (!!p->x_size0 + !!p->pixels_per_sec + !!p->duration_str > 2) {
-@@ -167,6 +248,8 @@ static int getopts(sox_effect_t * effp, int argc, char **argv)
+@@ -167,6 +252,8 @@ static int getopts(sox_effect_t * effp, int argc, char **argv)
    return optstate.ind !=argc || p->win_type == INT_MAX? lsx_usage(effp) : SOX_SUCCESS;
  }
  
@@ -141,7 +145,7 @@ index b3731ca..33d8159 100644
  static double make_window(priv_t * p, int end)
  {
    double sum = 0, * w = end < 0? p->window : p->window + end;
-@@ -545,6 +628,27 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
+@@ -545,6 +632,21 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
    char        text[200], * prefix;
    double      limit;
  
@@ -156,12 +160,6 @@ index b3731ca..33d8159 100644
 +  if (p->log10_axis && p->low_freq==0) {
 +    p->low_freq = 1;
 +  }
-+  /* Lower freq must be less than higher freq. Swap if not. */
-+  if (p->low_freq >= p->high_freq) {
-+    int tmp = p->low_freq;
-+    p->low_freq = p->high_freq;
-+    p->high_freq = tmp;
-+  }
 +
 +  log10_low_freq = log10f((float)p->low_freq);
 +  log10_high_freq = log10f((float)p->high_freq);
@@ -169,7 +167,7 @@ index b3731ca..33d8159 100644
    free(p->shared);
    if (p->using_stdout) {
      SET_BINARY_MODE(stdout);
-@@ -571,11 +675,28 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
+@@ -571,11 +673,28 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
  
    /* Spectrogram */
    for (k = 0; k < chans; ++k) {
@@ -200,7 +198,7 @@ index b3731ca..33d8159 100644
        if (!p->raw && !p->no_axes)                                 /* Y-axis lines */
          pixel(left - 1, base + j) = pixel(left + p->cols, base + j) = Grid;
      }
-@@ -607,25 +728,67 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
+@@ -607,25 +726,67 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
      }
  
      /* Y-axis */
@@ -283,7 +281,7 @@ index b3731ca..33d8159 100644
      /* Z-axis */
      k = min(400, c_rows);
      base = below + (c_rows - k) / 2;
-@@ -684,6 +847,8 @@ sox_effect_handler_t const * lsx_spectrogram_effect_fn(void)
+@@ -684,6 +845,8 @@ sox_effect_handler_t const * lsx_spectrogram_effect_fn(void)
      "\t-l\tLight background",
      "\t-m\tMonochrome",
      "\t-h\tHigh colour",
@@ -292,7 +290,7 @@ index b3731ca..33d8159 100644
      "\t-p num\tPermute colours (1 - 6); default 1",
      "\t-A\tAlternative, inferior, fixed colour-set (for compatibility only)",
      "\t-t text\tTitle text",
-@@ -691,6 +856,7 @@ sox_effect_handler_t const * lsx_spectrogram_effect_fn(void)
+@@ -691,6 +854,7 @@ sox_effect_handler_t const * lsx_spectrogram_effect_fn(void)
      "\t-o text\tOutput file name; default `spectrogram.png'",
      "\t-d time\tAudio duration to fit to X-axis; e.g. 1:00, 48",
      "\t-S position\tStart the spectrogram at the given input position",

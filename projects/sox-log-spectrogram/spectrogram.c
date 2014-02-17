@@ -220,6 +220,10 @@ static int getopts(sox_effect_t * effp, int argc, char **argv)
         lsx_fail("Frequency range `%s' is invalid. Frequencies must be positive.", optstate.arg);
         exit(1);
       }
+      if (p->low_freq >= p->high_freq) {
+        lsx_fail("Frequency range `%s' is invalid. Lower frequency must be less than higher frequency.", optstate.arg);
+        exit(1);
+      }
       break;
     default: lsx_fail("invalid option `-%c'", optstate.opt); return lsx_usage(effp);
   }
@@ -639,12 +643,6 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
   if (p->log10_axis && p->low_freq==0) {
     p->low_freq = 1;
   }
-  /* Lower freq must be less than higher freq. Swap if not. */
-  if (p->low_freq >= p->high_freq) {
-    int tmp = p->low_freq;
-    p->low_freq = p->high_freq;
-    p->high_freq = tmp;
-  }
 
   log10_low_freq = log10f((float)p->low_freq);
   log10_high_freq = log10f((float)p->high_freq);
@@ -681,7 +679,6 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
 
     priv_t * q = (priv_t *)(effp - effp->flow + k)->priv;
     base = !p->raw * below + (chans - 1 - k) * (p->rows + 1);
-
 
     for (j = 0; j < p->rows; ++j) {
       if (p->log10_axis) {
@@ -738,7 +735,6 @@ static int stop(sox_effect_t * effp) /* only called, by end(), on flow 0 */
       float log_scale = (float)p->rows/(log10_high_freq - log10_low_freq);
 
       print_up(10, below + (c_rows - font_X * (int)strlen(text)) / 2, Text, "Frequency (Hz)");
-
 
       for (k = 0; k < chans; ++k) {
         base = below + k * (p->rows + 1);
@@ -850,7 +846,7 @@ sox_effect_handler_t const * lsx_spectrogram_effect_fn(void)
     "\t-m\tMonochrome",
     "\t-h\tHigh colour",
     "\t-L\tPlot frequency on log axis",
-    "\t-R l:h\tSpecify frequency range (from l to h) to chart ",
+    "\t-R l:h\tSpecify frequency range (from l to h) to chart",
     "\t-p num\tPermute colours (1 - 6); default 1",
     "\t-A\tAlternative, inferior, fixed colour-set (for compatibility only)",
     "\t-t text\tTitle text",
