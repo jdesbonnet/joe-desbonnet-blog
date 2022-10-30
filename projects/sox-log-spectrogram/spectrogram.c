@@ -148,6 +148,13 @@ static int parse_num_with_suffix (const char *s, int *a) {
  * b is left unchanged. If :<b> then 'a' will be set to 0.
  * Return 0 of successful, -1 on failure.
  */
+
+/**The strchr() function is preferred over this function.
+For maximum portability, it is recommended to replace the function call to index() as follows:
+Twobob 2016-2022 ref: http://pubs.opengroup.org/onlinepubs/000095399/functions/index.html
+*/
+#define index(a,b) strchr((a),(b))
+
 static int parse_range (const char *s, int *a, int *b) {
   int a_status, b_status;
   char *colon = index(s,':');
