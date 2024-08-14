@@ -16,3 +16,6 @@ Spectrum peaks at wavelenghts (nm):
 820
 866
 
+
+![Lightning strike spectrum](./strike_spectrum.png)
+
